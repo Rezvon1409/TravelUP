@@ -10,8 +10,8 @@ async def  register_user(username : str , password : str , db :  Session):
     user = db.query(User).filter(User.username == username).first()
     if user : 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST , detail='Username already exists')
-    new_user = User(username=username , pasword_hash = hash_password(password))
-    db.asd(new_user)
+    new_user = User(username=username, password_hash=hash_password(password))
+    db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
