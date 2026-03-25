@@ -16,3 +16,7 @@ class Booking(Base):
     status = Column(String , default='pending')
     created_at = Column(DateTime , default=datetime.utcnow)
     
+
+    user = relationship("User", back_populates="bookings")
+    destination = relationship("Destination", back_populates="bookings")
+    payment = relationship("Payment", back_populates="booking", uselist=False)

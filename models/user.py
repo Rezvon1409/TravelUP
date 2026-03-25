@@ -13,4 +13,7 @@ class User(Base):
     avatar = Column(String, nullable=True)
     created_at = Column(DateTime , default=datetime.utcnow)
 
-    
+
+    profile = relationship("UserProfile", back_populates="user", uselist=False)
+    bookings = relationship("Booking", back_populates="user")
+    reviews = relationship("Review", back_populates="user")

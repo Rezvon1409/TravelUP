@@ -10,3 +10,6 @@ class UserProfile(Base):
     user_id = Column(Integer , ForeignKey('users.id') , nullable=False)
     theme = Column(String , default='system')
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+    user = relationship("User", back_populates="profile")

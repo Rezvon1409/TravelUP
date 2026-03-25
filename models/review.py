@@ -1,4 +1,4 @@
-from sqlalchemy import Column , String , Integer , DateTime , ForeignKey
+from sqlalchemy import Column , String , Integer , DateTime , ForeignKey , UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -13,4 +13,11 @@ class Review(Base):
     rating = Column(Integer , nullable= False)
     comment = Column(String , nullable=True)
     created_at = Column(DateTime , default=datetime.utcnow)
-    
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "destination_id", name="unique_user_destination_review"),
+    )
+
+
+    user = relationship("User", back_populates="reviews")
+    destination = relationship("Destination", back_populates="reviews")

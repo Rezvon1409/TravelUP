@@ -15,4 +15,6 @@ class Destination(Base):
     rating = Column(Float , default=0.0)
     created_at = Column(DateTime , default=datetime.utcnow)
 
-    
+
+    bookings = relationship("Booking", back_populates="destination")
+    reviews = relationship("Review", back_populates="destination")

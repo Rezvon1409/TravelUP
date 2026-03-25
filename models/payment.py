@@ -13,3 +13,5 @@ class Payment(Base):
     provider = Column(String, nullable=False)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    booking = relationship("Booking", back_populates="payment")
