@@ -52,7 +52,7 @@ async def refresh_tokens(refresh_token : str , db : Session):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
-    access_token = create_access_token(data=['sub': str(user_id)])
+    access_token = create_access_token(data={'sub': str(user_id)})
     new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
     return {
