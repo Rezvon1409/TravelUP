@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from api.auth import router as auth_router
 from api.profile import router as profile_router
 from api.destinations import router as destinations_router
@@ -24,9 +25,7 @@ app.include_router(payments_router)
 app.include_router(admin_router)
 
 
-@app.get("/")
-async def root():
-    return {"msg": "TravelUp API is running!"}
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

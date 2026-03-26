@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelUp – Modern Travel Booking</title>
+    <meta name="description" content="TravelUp: Discover and book the world's best destinations with ease.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="hidden">
+        <div class="nav-inner">
+            <div class="logo">✈ TravelUp</div>
+            <div class="nav-links" id="nav-links">
+                <a href="#" id="nav-destinations" class="nav-link active" onclick="navigate('destinations')">Destinations</a>
+                <a href="#" id="nav-bookings" class="nav-link" onclick="navigate('bookings')">My Bookings</a>
+                <a href="#" id="nav-payments" class="nav-link" onclick="navigate('payments')">Payments</a>
+                <a href="#" id="nav-profile" class="nav-link" onclick="navigate('profile')">Profile</a>
+                <a href="#" id="nav-admin" class="nav-link nav-admin hidden" onclick="navigate('admin')">⚙ Admin</a>
+            </div>
+            <div class="nav-right">
+                <div class="nav-user">
+                    <span class="avatar" id="nav-avatar">U</span>
+                    <span id="nav-username-label"></span>
+                </div>
+                <button class="btn btn-ghost" onclick="logout()">Logout</button>
+                <button class="hamburger" id="hamburger" onclick="toggleNav()">☰</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Loading overlay -->
+    <div id="page-loader" class="page-loader hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <main id="main-content">
+
+        <!-- ==================== AUTH ==================== -->
+        <section id="view-auth" class="view-auth">
+            <div class="auth-bg"></div>
+            <div class="auth-box">
+                <!-- Tabs -->
+                <div class="auth-tabs">
+                    <button id="tab-login" class="auth-tab active" onclick="switchTab('login')">Login</button>
+                    <button id="tab-register" class="auth-tab" onclick="switchTab('register')">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="form-login">
+                    <h2>Welcome Back</h2>
+                    <p class="text-muted mb-lg">Sign in to continue your journey.</p>
+                    <form id="login-form">
+                        <div class="field">
+                            <label>Username</label>
+                            <input type="text" id="login-username" placeholder="Enter username" required autocomplete="username">
+                        </div>
+                        <div class="field">
+                            <label>Password</label>
+                            <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full" id="login-btn">Sign In</button>
+                    </form>
+                </div>
+
+                <!-- Register Form -->
+                <div id="form-register" class="hidden">
+                    <h2>Create Account</h2>
+                    <p class="text-muted mb-lg">Start your adventure with TravelUp.</p>
+                    <form id="register-form">
+                        <div class="field">
+                            <label>Username</label>
+                            <input type="text" id="register-username" placeholder="Choose a username" required autocomplete="username">
+                        </div>
+                        <div class="field">
+                            <label>Password</label>
+                            <input type="password" id="register-password" placeholder="Create a password" required autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full" id="register-btn">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== DESTINATIONS ==================== -->
+        <section id="view-destinations" class="view hidden">
+            <div class="page-header">
+                <div>
+                    <h1>Explore Destinations</h1>
+                    <p class="text-muted">Find your perfect next adventure.</p>
+                </div>
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="filter-city" placeholder="Filter by city…" oninput="filterDestinations()">
+                <input type="text" id="filter-country" placeholder="Filter by country…" oninput="filterDestinations()">
+                <input type="number" id="filter-rating" placeholder="Min rating (1-5)" min="1" max="5" step="0.5" oninput="filterDestinations()">
+                <button class="btn btn-ghost" onclick="clearFilters()">Clear</button>
+            </div>
+            <div id="dest-loader" class="loader-row hidden"><div class="spinner"></div></div>
+            <div id="destinations-grid" class="dest-grid"></div>
+        </section>
+
+        <!-- ==================== BOOKINGS ==================== -->
+        <section id="view-bookings" class="view hidden">
+            <div class="page-header">
+                <div>
+                    <h1>My Bookings</h1>
+                    <p class="text-muted">Manage and track all your trips.</p>
+                </div>
+            </div>
+            <div id="bookings-loader" class="loader-row hidden"><div class="spinner"></div></div>
+            <div class="card table-wrap">
+                <table class="table" id="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Destination</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Travelers</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookings-tbody"></tbody>
+                </table>
+                <p id="bookings-empty" class="empty-state hidden">No bookings yet. Explore destinations and book a trip!</p>
+            </div>
+        </section>
+
+        <!-- ==================== PAYMENTS ==================== -->
+        <section id="view-payments" class="view hidden">
+            <div class="page-header">
+                <div>
+                    <h1>My Payments</h1>
+                    <p class="text-muted">Track all your payment history.</p>
+                </div>
+            </div>
+            <div id="payments-loader" class="loader-row hidden"><div class="spinner"></div></div>
+            <div class="card table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Booking ID</th>
+                            <th>Amount</th>
+                            <th>Currency</th>
+                            <th>Provider</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-tbody"></tbody>
+                </table>
+                <p id="payments-empty" class="empty-state hidden">No payments found.</p>
+            </div>
+        </section>
+
+        <!-- ==================== PROFILE ==================== -->
+        <section id="view-profile" class="view hidden">
+            <div class="page-header">
+                <div>
+                    <h1>My Profile</h1>
+                    <p class="text-muted">Manage your personal info and preferences.</p>
+                </div>
+            </div>
+            <div class="profile-layout">
+                <div class="card profile-card">
+                    <div class="profile-avatar" id="profile-big-avatar">U</div>
+                    <h3 id="profile-username-display">—</h3>
+                    <span class="badge" id="profile-role-badge">User</span>
+                </div>
+                <div class="card flex-1">
+                    <h3 class="section-title">Edit Profile</h3>
+                    <form id="profile-form">
+                        <div class="field-row">
+                            <div class="field">
+                                <label>First Name</label>
+                                <input type="text" id="profile-first-name" placeholder="First name">
+                            </div>
+                            <div class="field">
+                                <label>Last Name</label>
+                                <input type="text" id="profile-last-name" placeholder="Last name">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Bio</label>
+                            <textarea id="profile-bio" placeholder="Tell us about yourself…" rows="3"></textarea>
+                        </div>
+                        <div class="field">
+                            <label>Phone Number</label>
+                            <input type="tel" id="profile-phone" placeholder="+1 (555) 000-0000">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ADMIN PANEL ==================== -->
+        <section id="view-admin" class="view hidden">
+            <div class="page-header">
+                <div>
+                    <h1>⚙ Admin Panel</h1>
+                    <p class="text-muted">Manage users, destinations, bookings, and system data.</p>
+                </div>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="switchAdminTab('users')">Users</button>
+                <button class="admin-tab" onclick="switchAdminTab('destinations')">Destinations</button>
+                <button class="admin-tab" onclick="switchAdminTab('all-bookings')">All Bookings</button>
+                <button class="admin-tab" onclick="switchAdminTab('all-payments')">All Payments</button>
+            </div>
+
+            <!-- Admin: Users -->
+            <div id="admin-tab-users" class="admin-panel-content">
+                <div id="admin-users-loader" class="loader-row hidden"><div class="spinner"></div></div>
+                <div class="card table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Roles</th>
+                                <th>Permissions</th>
+                                <th>Admin?</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin: Destinations -->
+            <div id="admin-tab-destinations" class="admin-panel-content hidden">
+                <div class="card mb-lg">
+                    <h3 class="section-title">Add New Destination</h3>
+                    <form id="add-dest-form">
+                        <div class="field">
+                            <label>Title</label>
+                            <input type="text" id="dest-title" placeholder="e.g. Eiffel Tower &amp; Parisian Charm" required>
+                        </div>
+                        <div class="field-row">
+                            <div class="field">
+                                <label>City</label>
+                                <input type="text" id="dest-city" placeholder="e.g. Paris" required>
+                            </div>
+                            <div class="field">
+                                <label>Country</label>
+                                <input type="text" id="dest-country" placeholder="e.g. France" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Cover Image URL</label>
+                            <input type="url" id="dest-cover-image" placeholder="https://images.unsplash.com/…" required>
+                        </div>
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Rating (0-5)</label>
+                                <input type="number" id="dest-rating" min="0" max="5" step="0.1" placeholder="4.5" required>
+                            </div>
+                            <div class="field">
+                                <label>Description</label>
+                                <input type="text" id="dest-description" placeholder="Brief description…" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Destination</button>
+                    </form>
+                </div>
+                <div id="admin-dest-loader" class="loader-row hidden"><div class="spinner"></div></div>
+                <div class="card table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr><th>ID</th><th>Title</th><th>City</th><th>Country</th><th>Rating</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="admin-dest-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin: All Bookings -->
+            <div id="admin-tab-all-bookings" class="admin-panel-content hidden">
+                <div id="admin-bookings-loader" class="loader-row hidden"><div class="spinner"></div></div>
+                <div class="card table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>User ID</th>
+                                <th>Destination</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Travelers</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Update Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-bookings-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin: All Payments -->
+            <div id="admin-tab-all-payments" class="admin-panel-content hidden">
+                <div id="admin-payments-loader" class="loader-row hidden"><div class="spinner"></div></div>
+                <div class="card table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr><th>#</th><th>User ID</th><th>Booking</th><th>Amount</th><th>Currency</th><th>Provider</th><th>Status</th></tr>
+                        </thead>
+                        <tbody id="admin-payments-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Book Destination Modal -->
+    <div id="modal-book" class="modal-overlay hidden" onclick="closeModal('modal-book', event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modal-book-title">Book Trip</h3>
+                <button class="close-btn" onclick="closeModal('modal-book')">&times;</button>
+            </div>
+            <form id="booking-form">
+                <input type="hidden" id="book-dest-id">
+                <div class="field-row">
+                    <div class="field">
+                        <label>Start Date</label>
+                        <input type="date" id="book-start" required>
+                    </div>
+                    <div class="field">
+                        <label>End Date</label>
+                        <input type="date" id="book-end" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Travelers</label>
+                    <input type="number" id="book-travelers" min="1" value="1" required>
+                </div>
+                <div class="field">
+                    <label>Total Price ($)</label>
+                    <input type="number" id="book-price" min="0" value="500" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reviews Modal -->
+    <div id="modal-reviews" class="modal-overlay hidden" onclick="closeModal('modal-reviews', event)">
+        <div class="modal-box modal-wide">
+            <div class="modal-header">
+                <h3 id="modal-reviews-title">Reviews</h3>
+                <button class="close-btn" onclick="closeModal('modal-reviews')">&times;</button>
+            </div>
+            <div id="reviews-list" class="reviews-list"></div>
+            <hr class="divider">
+            <h4>Add Your Review</h4>
+            <form id="review-form">
+                <input type="hidden" id="review-dest-id">
+                <div class="field">
+                    <label>Rating (1-5)</label>
+                    <div class="star-picker" id="star-picker">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                    <input type="hidden" id="review-rating" value="0">
+                </div>
+                <div class="field">
+                    <label>Comment</label>
+                    <textarea id="review-comment" rows="3" placeholder="Share your experience…"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Destination Modal -->
+    <div id="modal-edit-dest" class="modal-overlay hidden" onclick="closeModal('modal-edit-dest', event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Edit Destination</h3>
+                <button class="close-btn" onclick="closeModal('modal-edit-dest')">&times;</button>
+            </div>
+            <form id="edit-dest-form">
+                <input type="hidden" id="edit-dest-id">
+                <div class="field">
+                    <label>Title</label>
+                    <input type="text" id="edit-dest-title" required>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>City</label><input type="text" id="edit-dest-city" required></div>
+                    <div class="field"><label>Country</label><input type="text" id="edit-dest-country" required></div>
+                </div>
+                <div class="field">
+                    <label>Cover Image URL</label>
+                    <input type="url" id="edit-dest-cover-image" required>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Rating</label><input type="number" id="edit-dest-rating" min="0" max="5" step="0.1" required></div>
+                    <div class="field"><label>Description</label><input type="text" id="edit-dest-description" required></div>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Update Destination</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assign Role Modal -->
+    <div id="modal-assign-role" class="modal-overlay hidden" onclick="closeModal('modal-assign-role', event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modal-assign-role-title">Assign Role</h3>
+                <button class="close-btn" onclick="closeModal('modal-assign-role')">&times;</button>
+            </div>
+            <input type="hidden" id="assign-role-user-id">
+            <div class="field">
+                <label>Select Role</label>
+                <select id="assign-role-select" class="select"></select>
+            </div>
+            <button class="btn btn-primary w-full mt-md" onclick="submitAssignRole()">Assign Role</button>
+        </div>
+    </div>
+
+    <!-- Make Payment Modal -->
+    <div id="modal-pay" class="modal-overlay hidden" onclick="closeModal('modal-pay', event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Make Payment</h3>
+                <button class="close-btn" onclick="closeModal('modal-pay')">&times;</button>
+            </div>
+            <form id="pay-form">
+                <input type="hidden" id="pay-booking-id">
+                <div class="field">
+                    <label>Amount ($)</label>
+                    <input type="number" id="pay-amount" min="1" step="0.01" required>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Currency</label>
+                        <select id="pay-currency" class="select">
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Provider</label>
+                        <select id="pay-provider" class="select">
+                            <option value="stripe">Stripe</option>
+                            <option value="paypal">PayPal</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Pay Now</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
