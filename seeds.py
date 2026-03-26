@@ -8,15 +8,11 @@ from models.destination import Destination
 from models.review import Review
 from models.payment import Payment
 from models.profile import UserProfile
-
-engine = create_engine(settings.DATABASE_URL)
-
-models = [User, Booking, Destination, Review, Payment, UserProfile]
-actions = ["read", "create", "update", "delete"]
-role_names = ["admin", "moderator", "user"]
-
+from database import Base, engine
 
 def seed_permissions(db: Session):
+    models = [User, Booking, Destination, Review, Payment, UserProfile]
+    actions = ["read", "create", "update", "delete"]
     for model in models:
         for action in actions:
             name = f"{model.__tablename__}:{action}"
@@ -25,14 +21,13 @@ def seed_permissions(db: Session):
     db.commit()
     print("Permissions created!")
 
-
 def seed_roles(db: Session):
+    role_names = ["admin", "moderator", "user"]
     for name in role_names:
         if not db.query(Role).filter(Role.name == name).first():
             db.add(Role(name=name))
     db.commit()
     print("Roles created!")
-
 
 def seed_admin(db: Session):
     if db.query(User).filter(User.username == "admin").first():
@@ -46,9 +41,20 @@ def seed_admin(db: Session):
 
     admin.roles.append(db.query(Role).filter(Role.name == "admin").first())
     admin.permissions.extend(db.query(Permission).all())
-    db.commit()
-    print("Admin created!")
+    
 
+    profile = UserProfile(
+        user_id=admin.id,
+        first_name="Stellar",
+        last_name="Admin",
+        email="admin@travelup.app",
+        bio="Master of the Cosmic Travel Nebula.",
+        theme="light"
+    )
+    db.add(profile)
+    
+    db.commit()
+    print("Admin created with profile!")
 
 DEMO_DESTINATIONS = [
     {
@@ -113,7 +119,6 @@ DEMO_DESTINATIONS = [
     },
 ]
 
-
 def seed_destinations(db: Session):
     if db.query(Destination).count() > 0:
         print("Destinations already seeded!")
@@ -123,15 +128,15 @@ def seed_destinations(db: Session):
     db.commit()
     print(f"Seeded {len(DEMO_DESTINATIONS)} demo destinations!")
 
-
 def run_seeds():
+   
+    Base.metadata.create_all(bind=engine)
     db = Session(bind=engine)
     seed_permissions(db)
     seed_roles(db)
     seed_admin(db)
     seed_destinations(db)
     db.close()
-
 
 if __name__ == "__main__":
     run_seeds()

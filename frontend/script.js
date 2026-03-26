@@ -150,18 +150,31 @@ function applyUserUI() {
     const username = state.user?.username || state.user?.first_name || 'User';
     document.getElementById('nav-username-label').textContent = username;
     document.getElementById('nav-avatar').textContent = username[0].toUpperCase();
-    document.getElementById('profile-big-avatar').textContent = username[0].toUpperCase();
-    document.getElementById('profile-username-display').textContent = username;
+    
+    // Modern Profile Sidebar
+    const profileBigAvatar = document.getElementById('profile-big-avatar');
+    if (profileBigAvatar) {
+        profileBigAvatar.innerHTML = `<span>${username[0].toUpperCase()}</span>`;
+    }
+    
+    const profileUsernameDisplay = document.getElementById('profile-username-display');
+    if (profileUsernameDisplay) {
+        profileUsernameDisplay.textContent = username;
+    }
 
     const adminNavLink = document.getElementById('nav-admin');
+    const roleBadge = document.getElementById('profile-role-badge');
+    
     if (state.isAdmin) {
-        adminNavLink.classList.remove('hidden');
-        document.getElementById('profile-role-badge').textContent = '⚙ Admin';
-        document.getElementById('profile-role-badge').className = 'badge badge-admin';
+        if (adminNavLink) adminNavLink.classList.remove('hidden');
+        if (roleBadge) {
+            roleBadge.innerHTML = '<span class="badge badge-admin">⚙ Admin</span>';
+        }
     } else {
-        adminNavLink.classList.add('hidden');
-        document.getElementById('profile-role-badge').textContent = 'Member';
-        document.getElementById('profile-role-badge').className = 'badge badge-blue';
+        if (adminNavLink) adminNavLink.classList.add('hidden');
+        if (roleBadge) {
+            roleBadge.innerHTML = '<span class="badge badge-blue">🌟 Explorer</span>';
+        }
     }
 }
 
@@ -493,37 +506,6 @@ function setStarRating(val) {
     });
 }
 
-/* ============================================================
-   PROFILE
-   ============================================================ */
-async function loadProfile() {
-    try {
-        const profile = await api('GET', '/profile');
-        document.getElementById('profile-first-name').value = profile.first_name || '';
-        document.getElementById('profile-last-name').value  = profile.last_name  || '';
-        document.getElementById('profile-bio').value        = profile.bio         || '';
-        document.getElementById('profile-phone').value      = profile.phone       || '';
-    } catch (err) { toast(err.message, 'error'); }
-}
-
-async function handleProfileUpdate(e) {
-    e.preventDefault();
-    const btn = e.submitter;
-    setLoading(btn, true);
-
-    const body = {
-        first_name: document.getElementById('profile-first-name').value || null,
-        last_name:  document.getElementById('profile-last-name').value  || null,
-        bio:        document.getElementById('profile-bio').value         || null,
-        phone:      document.getElementById('profile-phone').value       || null,
-    };
-
-    try {
-        await api('PATCH', '/profile/update', body);
-        toast('Profile updated!', 'success');
-    } catch (err) { toast(err.message, 'error'); }
-    finally { setLoading(btn, false); }
-}
 
 /* ============================================================
    ADMIN PANEL
@@ -919,4 +901,124 @@ function esc(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+
+// Load profile with stats
+async function loadProfile() {
+    try {
+        const profile = await api('GET', '/profile');
+        
+        // Fill form fields
+        const firstName = document.getElementById('profile-first-name');
+        const lastName = document.getElementById('profile-last-name');
+        const bio = document.getElementById('profile-bio');
+        const phone = document.getElementById('profile-phone');
+        const email = document.getElementById('profile-email');
+        
+        if (firstName) firstName.value = profile.first_name || '';
+        if (lastName) lastName.value = profile.last_name || '';
+        if (bio) bio.value = profile.bio || '';
+        if (phone) phone.value = profile.phone || '';
+        if (email) email.value = profile.email || '';
+        
+        // Update display fields
+        const emailDisplay = document.getElementById('profile-email-display');
+        const phoneDisplay = document.getElementById('profile-phone-display');
+        if (emailDisplay) emailDisplay.textContent = profile.email || '—';
+        if (phoneDisplay) phoneDisplay.textContent = profile.phone || '—';
+        
+        // Load stats
+        await loadProfileStats();
+        await loadRecentActivity();
+        
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+
+// Load profile statistics
+async function loadProfileStats() {
+    try {
+        // Get bookings count
+        const bookings = await api('GET', '/bookings/my');
+        const bookingsCount = document.getElementById('profile-bookings-count');
+        if (bookingsCount) bookingsCount.textContent = bookings?.length || 0;
+        
+        // Get reviews count (from user reviews endpoint if available)
+        // For now, set placeholder
+        const reviewsCount = document.getElementById('profile-reviews-count');
+        if (reviewsCount) reviewsCount.textContent = '—';
+        
+        // Member since (from user created_at)
+        const memberSince = document.getElementById('profile-member-since');
+        if (memberSince && state.user?.created_at) {
+            memberSince.textContent = new Date(state.user.created_at).getFullYear();
+        }
+        
+    } catch (err) {
+        console.log('Stats not available');
+    }
+}
+
+// Load recent activity (last 3 bookings)
+async function loadRecentActivity() {
+    const activityList = document.getElementById('recent-bookings-list');
+    if (!activityList) return;
+    
+    try {
+        const bookings = await api('GET', '/bookings/my');
+        const recent = bookings?.slice(0, 3) || [];
+        
+        if (recent.length === 0) {
+            activityList.innerHTML = '<p class="text-muted" style="text-align:center; padding:2rem;">✨ No trips yet. Start your journey!</p>';
+            return;
+        }
+        
+        activityList.innerHTML = recent.map(booking => `
+            <div class="activity-item">
+                <div class="activity-icon">✈️</div>
+                <div class="activity-details">
+                    <div class="activity-title">Trip to Destination #${booking.destination_id}</div>
+                    <div class="activity-meta">
+                        <span>📅 ${booking.start_date} → ${booking.end_date}</span>
+                        <span>👥 ${booking.travelers_count} travelers</span>
+                    </div>
+                </div>
+                <div class="activity-status ${booking.status === 'confirmed' ? 'badge-green' : 'badge-yellow'}">
+                    ${booking.status || 'pending'}
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (err) {
+        activityList.innerHTML = '<p class="text-muted" style="text-align:center;">Unable to load recent activity</p>';
+    }
+}
+
+// Update profile
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    const btn = e.submitter;
+    setLoading(btn, true);
+
+    const body = {
+        first_name: document.getElementById('profile-first-name')?.value || null,
+        last_name: document.getElementById('profile-last-name')?.value || null,
+        bio: document.getElementById('profile-bio')?.value || null,
+        phone: document.getElementById('profile-phone')?.value || null,
+        email: document.getElementById('profile-email')?.value || null
+    };
+
+    try {
+        await api('PATCH', '/profile/update', body);
+        toast('✨ Profile updated successfully!', 'success');
+        await bootApp(); // Refresh user data
+        await loadProfile(); // Reload profile
+    } catch (err) {
+        toast(err.message, 'error');
+    } finally {
+        setLoading(btn, false);
+    }
 }
