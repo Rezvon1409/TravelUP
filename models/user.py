@@ -58,6 +58,6 @@ class User(Base):
 
     roles = relationship("Role", secondary=user_roles, back_populates="users")
     permissions = relationship("Permission", secondary=user_permissions, back_populates="users")
-    profile = relationship("UserProfile", back_populates="user", uselist=False)
-    bookings = relationship("Booking", back_populates="user")
-    reviews = relationship("Review", back_populates="user")
+    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
+    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")

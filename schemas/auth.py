@@ -6,7 +6,7 @@ class RegisterSchema(BaseModel):
 
 class LoginSchema(BaseModel):
     username : str
-    passwrod : str
+    password : str
 
 class TokenSchema(BaseModel):
     access_token : str

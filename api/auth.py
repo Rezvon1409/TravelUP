@@ -14,7 +14,7 @@ async def register(data: RegisterSchema, db: Session = Depends(get_db)):
 
 @router.post('/login', response_model=TokenSchema)
 async def login(data : LoginSchema , db : Session = Depends(get_db)):
-    return await login_user(data.username , data.passwrod , db)
+    return await login_user(data.username , data.password , db)
 
 @router.post('/refresh' , response_model=TokenSchema)
 async def refresh(data : RefreshSchema , db : Session = Depends(get_db)):

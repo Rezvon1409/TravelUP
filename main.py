@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 from api.auth import router as auth_router
 from api.profile import router as profile_router
 from api.destinations import router as destinations_router
@@ -11,6 +12,8 @@ from api.admin import router as admin_router
 
 
 app = FastAPI(title="TravelUp")
+
+app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
 
 app.include_router(auth_router)
 app.include_router(profile_router)

@@ -11,8 +11,23 @@ router = APIRouter(prefix="/destinations", tags=["Destinations"])
 
 
 @router.get("", response_model=List[DestinationSchema])
-async def get_destinations(db: Session = Depends(get_db)):
-    return db.query(Destination).all()
+async def get_destinations(
+    city: str | None = None,
+    country: str | None = None,
+    rating: float | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Destination)
+
+ 
+    if city:
+        query = query.filter(Destination.city.ilike(f"%{city}%"))
+    if country:
+        query = query.filter(Destination.country.ilike(f"%{country}%"))
+    if rating:
+        query = query.filter(Destination.rating >= rating)
+
+    return query.all()
 
 
 @router.get("/{id}", response_model=DestinationSchema)

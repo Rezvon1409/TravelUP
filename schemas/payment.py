@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from enum import Enum
 
 
 class PaymentCreateSchema(BaseModel):
@@ -7,6 +8,11 @@ class PaymentCreateSchema(BaseModel):
     amount: float
     currency: str = "TJS"
     provider: str
+
+class PaymentStatus(str, Enum):
+    pending = "pending"
+    paid = "paid"
+    failed = "failed"
 
 class PaymentSchema(BaseModel):
     id: int

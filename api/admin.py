@@ -93,3 +93,76 @@ async def get_users(user: User = Depends(get_admin_user), db: Session = Depends(
         }
         for u in users
     ]
+
+@router.get("/users/{user_id}")
+async def get_user(user_id: int, user: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    target = db.query(User).options(selectinload(User.roles),selectinload(User.permissions) ).filter(User.id == user_id).first()
+    
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": target.id,
+        "username": target.username,
+        "is_admin": target.is_admin,
+        "roles": [r.name for r in target.roles],
+        "permissions": [p.name for p in target.permissions]
+    }
+
+
+@router.delete("/remove-role")
+async def remove_role(data: SetRoleSchema, user: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    target_user = db.query(User).options(selectinload(User.roles)).filter(User.id == data.user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    role = db.query(Role).filter(Role.id == data.role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+
+    if role in target_user.roles:
+        target_user.roles.remove(role)
+        db.commit()
+
+    return {"msg": f"Role '{role.name}' removed from '{target_user.username}'"}
+
+
+
+
+class RemovePermissionSchema(BaseModel):
+    user_id: int
+    permission_ids: list[int]
+
+
+@router.delete("/remove-permissions")
+async def remove_permissions(data: RemovePermissionSchema, user: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    target_user = db.query(User).options(selectinload(User.permissions)).filter(User.id == data.user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    permissions = db.query(Permission).filter(Permission.id.in_(data.permission_ids)).all()
+    if not permissions:
+        raise HTTPException(status_code=404, detail="Permissions not found")
+
+    for perm in permissions:
+        if perm in target_user.permissions:
+            target_user.permissions.remove(perm)
+
+    db.commit()
+    return {"msg": f"Permissions removed from '{target_user.username}'"}
+
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: int, user: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if target.id == user.id:
+        raise HTTPException(status_code=400, detail="You cannot delete yourself")
+
+    db.delete(target)
+    db.commit()
+    return {"msg": f"User '{target.username}' deleted"}
+
