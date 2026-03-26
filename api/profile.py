@@ -12,6 +12,13 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
 @router.get("", response_model=ProfileSchema)
 async def get_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    
+    if not profile:
+        profile = UserProfile(user_id=user.id)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    
     return profile
 
 

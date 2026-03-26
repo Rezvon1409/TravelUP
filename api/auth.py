@@ -7,10 +7,10 @@ from services.auth import *
 router =APIRouter(prefix='/auth', tags=['Auth'])
 
 
-@router.post('/register')
-async def register(data : RegisterSchema , db : Session = Depends(get_db)):
-    user = await register_user(data.username , data.password , db)
-    return {"msg": "User created", "id": user.id}
+@router.post("/register")
+async def register(data: RegisterSchema, db: Session = Depends(get_db)):
+    result = await register_user(data.username, data.password, db)
+    return result
 
 @router.post('/login', response_model=TokenSchema)
 async def login(data : LoginSchema , db : Session = Depends(get_db)):

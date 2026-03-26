@@ -1,25 +1,38 @@
 from sqlalchemy.orm import Session
-from models.user import User
+from models.user import User , Role
 from models.profile import UserProfile
 from core.security import *
 from fastapi import HTTPException , status
 from core.security import decode_token
 
 
-async def  register_user(username : str , password : str , db :  Session):
+async def register_user(username: str, password: str, db: Session):
     user = db.query(User).filter(User.username == username).first()
-    if user : 
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST , detail='Username already exists')
+    if user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
+
     new_user = User(username=username, password_hash=hash_password(password))
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    profile = UserProfile(user_id = new_user.id)
+
+    profile = UserProfile(user_id=new_user.id)
     db.add(profile)
+    db.commit() 
+
+
+    user_role = db.query(Role).filter(Role.name == "user").first()
+    if user_role:
+        new_user.roles.append(user_role)
+
     db.commit()
 
-    return new_user
+    return {
+        "id": new_user.id,
+        "username": new_user.username,
+        "roles": [r.name for r in new_user.roles]
+    }
 
 
 async def login_user(username : str , password : str , db : Session):
